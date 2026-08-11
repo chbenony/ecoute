@@ -1,0 +1,12 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d0d0f;
+  color: #f0eee8;
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+}
