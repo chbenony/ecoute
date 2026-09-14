@@ -106,7 +106,7 @@ const submitScore = async () => {
           marginBottom: '0.25rem'
         }}>écoute</h1>
         <p style={{ fontFamily: 'DM Mono', fontSize: 11, color: '#666', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          music league · song recommender
+          music league · song recommender · song powered by Claude
         </p>
       </div>
 
