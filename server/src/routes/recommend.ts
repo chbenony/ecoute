@@ -1,7 +1,7 @@
 import {Router, Request, Response} from 'express';
 import { getRecommendations, RecommendRequest } from '../services/claude';
 import { error } from 'node:console';
-import { getHistory, saveRecommendations, saveRound } from '../db/history';
+import { getHistory, saveRecommendations, saveRound, updateRoundScore } from '../db/history';
 
 const router = Router();
 
@@ -28,5 +28,17 @@ router.get('/history', (req: Request, res: Response) => {
     const history = getHistory();
     res.json({history});
 });
+
+router.patch('/:id/score', (req: Request,  res: Response) => {
+    const roundId = Number(req.params.id);
+    const { submittedSong, submittedArtist, score } = req.body as {
+        submittedSong: string;
+        submittedArtist: string;
+        score: number;
+    };
+
+    updateRoundScore(roundId, submittedSong, submittedArtist, score);
+    res.json({ success: true });
+})
 
 export default router;
