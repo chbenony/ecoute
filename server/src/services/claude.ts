@@ -54,7 +54,6 @@ const cleaned = content.text
 .replace(/```\n?/g, '')
 .trim();
 
-// const parsed = JSON.parse(content.text);
 const parsed = JSON.parse(cleaned);
 return parsed.recommendations;
 }
