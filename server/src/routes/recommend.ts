@@ -1,11 +1,18 @@
+import rateLimit from 'express-rate-limit';
 import {Router, Request, Response} from 'express';
 import { getRecommendations, RecommendRequest } from '../services/claude';
 import { error } from 'node:console';
 import { getHistory, saveRecommendations, saveRound, updateRoundScore } from '../db/history';
 
+const recommendationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 requests per IP per window
+    message: {error: 'Too many requests, please try again later.'},
+})
+
 const router = Router();
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', recommendationLimiter, async (req: Request, res: Response) => {
     const {theme, context, vibes} = req.body as RecommendRequest;
 
     if (!theme) {
