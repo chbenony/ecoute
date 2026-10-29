@@ -1,9 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY
-});
-
 export interface RecommendRequest {
     theme: string
     context?: string;
@@ -15,6 +9,55 @@ export interface SongRecommendation {
     artist: string;
     reasoning: string;
     rank: number;
+}
+
+async function getAuthToken(): Promise<string> {
+    const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            client_id: process.env.AUTH0_CLIENT_ID,
+            client_secret: process.env.AUTH0_CLIENT_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            grant_type: 'client_credentials',
+        }),
+    });
+
+    const data = await response.json();
+    return data.access_token;
+}
+
+async function sendToSift(prompt: string): Promise<string> {
+    const token = await getAuthToken();
+
+    const response = await fetch(process.env.SIFT_URL!, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            query: `
+            mutation SendMessage($input: SendMessageInput!) {
+                sendMessage(input: $input) {
+                    content
+                }
+            }
+            `,
+            variables: {
+                input: {
+                    model: 'claude-haiku-4-5-20251001',
+                    content: prompt,
+                },
+            },
+        }),
+    });
+
+    const data = await response.json();
+    if (data.errors) {
+        throw new Error(data.errors[0].message);
+    }
+    return data.data.sendMessage.content;
 }
 
 export async function getRecommendations(req: RecommendRequest): Promise<SongRecommendation[]> {
@@ -40,16 +83,9 @@ Respond only with this JSON structure:
   ]
 }`;
 
-const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    messages: [{role: 'user', content: prompt}],
-});
+const content = await sendToSift(prompt);
 
-const content = message.content[0];
-if (content.type !== 'text') throw new Error('unexpected response type');
-
-const cleaned = content.text
+const cleaned = content
 .replace(/```json\n?/g, '')
 .replace(/```\n?/g, '')
 .trim();
