@@ -66,4 +66,4 @@ ecoute/
 
 ## ⚠️ Known gaps
 
-- The UI's "save score" action calls `PATCH /recommend/:id/score`, but that endpoint isn't implemented on the server yet — scores won't persist until it's added.
+- The History tab's data persists correctly, but it doesn't reload after a full page refresh — likely a missing fetch-on-mount for the `GET /recommend/history` endpoint.
