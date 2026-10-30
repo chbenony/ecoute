@@ -23,6 +23,11 @@ async function getAuthToken(): Promise<string> {
         }),
     });
 
+    if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`auth0 token request failed: ${response.status} ${body.slice(0, 200)}`);
+    }
+
     const data = await response.json();
     return data.access_token;
 }
@@ -52,6 +57,11 @@ async function sendToSift(prompt: string): Promise<string> {
             },
         }),
     });
+
+    if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`sift request failed: ${response.status} ${body.slice(0, 200)}`);
+    }
 
     const data = await response.json();
     if (data.errors) {
