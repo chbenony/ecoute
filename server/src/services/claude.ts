@@ -1,77 +1,101 @@
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 3000;
+const RETRYABLE = [502, 503];
 export interface RecommendRequest {
-    theme: string
-    context?: string;
-    vibes?: string[];
+  theme: string;
+  context?: string;
+  vibes?: string[];
 }
 
 export interface SongRecommendation {
-    title: string;
-    artist: string;
-    reasoning: string;
-    rank: number;
+  title: string;
+  artist: string;
+  reasoning: string;
+  rank: number;
 }
 
 async function getAuthToken(): Promise<string> {
-    const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            client_id: process.env.AUTH0_CLIENT_ID,
-            client_secret: process.env.AUTH0_CLIENT_SECRET,
-            audience: process.env.AUTH0_AUDIENCE,
-            grant_type: 'client_credentials',
-        }),
-    });
+  const response = await fetch(
+    `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: process.env.AUTH0_CLIENT_ID,
+        client_secret: process.env.AUTH0_CLIENT_SECRET,
+        audience: process.env.AUTH0_AUDIENCE,
+        grant_type: 'client_credentials',
+      }),
+    },
+  );
 
-    if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`auth0 token request failed: ${response.status} ${body.slice(0, 200)}`);
-    }
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `auth0 token request failed: ${response.status} ${body.slice(0, 200)}`,
+    );
+  }
 
-    const data = await response.json();
-    return data.access_token;
+  const data = await response.json();
+  return data.access_token;
 }
 
 async function sendToSift(prompt: string): Promise<string> {
-    const token = await getAuthToken();
+  const token = await getAuthToken();
 
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const response = await fetch(process.env.SIFT_URL!, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-            query: `
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `
             mutation SendMessage($input: SendMessageInput!) {
                 sendMessage(input: $input) {
                     content
                 }
             }
             `,
-            variables: {
-                input: {
-                    model: 'claude-haiku-4-5-20251001',
-                    content: prompt,
-                },
-            },
-        }),
+        variables: {
+          input: {
+            model: 'claude-haiku-4-5-20251001',
+            content: prompt,
+          },
+        },
+      }),
     });
 
+    if (RETRYABLE.includes(response.status) && attempt < MAX_ATTEMPTS) {
+      console.warn(
+        `sift returned ${response.status}, retrying (attempt ${attempt}/${MAX_ATTEMPTS})`,
+      );
+      await sleep(RETRY_DELAY_MS);
+      continue;
+    }
+
     if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`sift request failed: ${response.status} ${body.slice(0, 200)}`);
+      const body = await response.text();
+      throw new Error(
+        `sift request failed: ${response.status} ${body.slice(0, 200)}`,
+      );
     }
 
     const data = await response.json();
     if (data.errors) {
-        throw new Error(data.errors[0].message);
+      throw new Error(data.errors[0].message);
     }
     return data.data.sendMessage.content;
+  }
+
+  throw new Error('unreachable');
 }
 
-export async function getRecommendations(req: RecommendRequest): Promise<SongRecommendation[]> {
-    const prompt = `You are Écoute, a Music League song recommendation assistant.
+export async function getRecommendations(
+  req: RecommendRequest,
+): Promise<SongRecommendation[]> {
+  const prompt = `You are Écoute, a Music League song recommendation assistant.
 
 Music League is a fun music game where players submit songs matching a theme and vote on each other's picks.
 
@@ -93,13 +117,16 @@ Respond only with this JSON structure:
   ]
 }`;
 
-const content = await sendToSift(prompt);
+  const content = await sendToSift(prompt);
 
-const cleaned = content
-.replace(/```json\n?/g, '')
-.replace(/```\n?/g, '')
-.trim();
+  const cleaned = content
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
 
-const parsed = JSON.parse(cleaned);
-return parsed.recommendations;
+  const parsed = JSON.parse(cleaned);
+  return parsed.recommendations;
 }
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
