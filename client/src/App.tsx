@@ -4,6 +4,14 @@ import "./App.css";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+// sift sleeps on Render's free tier and doesn't wake for requests from the
+// écoute server, only from outside Render. Wake it from the browser on page
+// load so it's up by the time the user asks for a recommendation.
+const SIFT_WAKE_URL = import.meta.env.VITE_SIFT_WAKE_URL;
+if (SIFT_WAKE_URL) {
+  fetch(SIFT_WAKE_URL, { mode: "no-cors" }).catch(() => {});
+}
+
 interface Recommendation {
   rank: number;
   title: string;
