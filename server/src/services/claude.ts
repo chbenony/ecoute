@@ -1,5 +1,6 @@
-const MAX_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 3000;
+// Render's free tier takes ~20s to wake sift, so retry for ~25s.
+const MAX_ATTEMPTS = 6;
+const RETRY_DELAY_MS = 5000;
 const RETRYABLE = [502, 503];
 export interface RecommendRequest {
   theme: string;
