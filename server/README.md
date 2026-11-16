@@ -45,14 +45,14 @@ The M2M application must be authorized for the API identified by `AUTH0_AUDIENCE
 
 ```bash
 npm install
-npm run dev     # ts-node src/index.ts, http://localhost:3000
+npm run dev     # tsx watch src/index.ts, http://localhost:3000
 ```
 
 Or run both client and server from the repo root with `npm run dev`.
 
 | Script | Description |
 | --- | --- |
-| `npm run dev` | Run with `ts-node` |
+| `npm run dev` | Run with `tsx`, restarting on file changes. tsx doesn't type-check; `npm run build` does. |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm start` | Run the compiled server (`node dist/index.js`) |
 
@@ -61,7 +61,8 @@ Or run both client and server from the repo root with `npm run dev`.
 The server is deployed as a Render Web Service.
 
 - **Root directory:** `server`
-- **Build command:** `npm install && npm run build`
+- **Build command:** `npm ci && npm run build`. Use `npm ci`, not `npm install`: Render caches `node_modules` between builds, and `npm install` can keep stale native modules from a previous Node version.
+- **Node version:** set by `engines.node` in `package.json` (currently `26.x`).
 - **Start command:** `npm start`
 - **Environment:** add `SIFT_URL` and the four `AUTH0_*` variables in the Render dashboard. Don't set `PORT` — Render provides it and the server reads `process.env.PORT`.
 - **CORS:** the deployed client origin must be in the allowlist in `src/index.ts` (currently `https://ecoute-five.vercel.app`).

@@ -42,7 +42,13 @@ ecoute/
 
 ## 🚀 Setup
 
-1. **Install dependencies** (root, client, and server each have their own `package.json`):
+1. **Use Node 26** (pinned in `.nvmrc`):
+
+   ```bash
+   nvm use
+   ```
+
+2. **Install dependencies** (root, client, and server each have their own `package.json`):
 
    ```bash
    npm install
@@ -50,13 +56,9 @@ ecoute/
    npm install --prefix server
    ```
 
-2. **Add your Anthropic API key** to `server/.env`:
+3. **Configure the server** in `server/.env`. Recommendations go through [sift](https://github.com/chbenony/sift), so you need `SIFT_URL` and the `AUTH0_*` variables. See [server/README.md](server/README.md#environment-variables) for the full list. For local development, run sift too and point `SIFT_URL` at it (e.g. `http://localhost:9000/graphql`).
 
-   ```
-   ANTHROPIC_API_KEY=sk-ant-...
-   ```
-
-3. **Run both apps together** from the repo root:
+4. **Run both apps together** from the repo root:
 
    ```bash
    npm run dev

@@ -30,6 +30,8 @@
     "tsx": "^4.23.15"
   },
   "allowScripts": {
-    "better-sqlite3@12.8.0": true
+    "esbuild@0.28.2": true,
+    "fsevents": false,
+    "better-sqlite3": false
   }
 }
