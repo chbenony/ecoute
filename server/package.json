@@ -26,7 +26,8 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.2"
+    "@types/node": "^25.5.2",
+    "tsx": "^4.23.15"
   },
   "allowScripts": {
     "better-sqlite3@12.8.0": true
